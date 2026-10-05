@@ -47,7 +47,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   fetchUser: async () => {
     try {
       const res = await api.get<{ user: User }>("/auth/me");
-      if (res.data) set({ user: res.data.user, isAuthenticated: true, isLoading: false });
-    } catch { set({ user: null, isAuthenticated: false, isLoading: false }); }
+      if (res.data) {
+        set({ user: res.data.user, isAuthenticated: true, isLoading: false });
+      } else {
+        set({ user: null, isAuthenticated: false, isLoading: false });
+      }
+    } catch { 
+      set({ user: null, isAuthenticated: false, isLoading: false }); 
+    }
   },
 }));

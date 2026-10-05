@@ -2,9 +2,15 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuthStore } from "@/stores/auth.store";
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  const fetchUser = useAuthStore((s) => s.fetchUser);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
   const [queryClient] = useState(
     () =>
       new QueryClient({

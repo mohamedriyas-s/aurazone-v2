@@ -119,6 +119,7 @@ export const productVariantSchema = z.object({
   isAvailable: z.boolean().default(true),
   attributes: z.array(productVariantAttributeSchema),
   quantity: z.number().int().min(0).default(0),
+  images: z.array(z.any()).optional(),
 });
 
 export const productSchema = z.object({

@@ -13,7 +13,13 @@ import { useCartStore } from "@/stores/cart.store";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuthStore();
+
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      router.push("/login?redirect=/checkout");
+    }
+  }, [isAuthLoading, isAuthenticated, router]);
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -76,12 +82,21 @@ export default function CheckoutPage() {
         },
         theme: {
           color: "#0f172a" // Tailwind slate-900
+        },
+        modal: {
+          ondismiss: function () {
+            api.post(`/orders/${variables.orderId}/fail-payment`)
+              .then(() => fetchCart())
+              .catch(console.error);
+          }
         }
       };
 
       const rzp = new (window as any).Razorpay(options);
       rzp.on('payment.failed', function (response: any) {
-        api.post(`/orders/${variables.orderId}/fail-payment`).catch(console.error);
+        api.post(`/orders/${variables.orderId}/fail-payment`)
+          .then(() => fetchCart())
+          .catch(console.error);
         alert("Payment failed. Please try again.");
       });
       rzp.open();
@@ -163,7 +178,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (isCartLoading) {
+  if (isCartLoading || isAuthLoading || !isAuthenticated) {
     return (
       <div className="section-container py-16 text-center flex justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full"></div>

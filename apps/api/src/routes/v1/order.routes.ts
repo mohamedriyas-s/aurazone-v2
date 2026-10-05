@@ -126,6 +126,27 @@ const orderRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
+  fastify.post("/:id/fail-payment", { preHandler: [optionalAuth] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    
+    const userId = request.user?.userId;
+    const sessionId = request.headers["x-guest-session"] as string | undefined;
+
+    const order = await prisma.order.findUnique({ where: { id } });
+    if (!order) return sendError(reply, "Order not found", 404);
+    
+    if (userId && order.userId !== userId) return sendError(reply, "Unauthorized", 401);
+    if (!userId && order.sessionId !== sessionId) return sendError(reply, "Unauthorized", 401);
+
+    try {
+      await orderService.failOrder(id);
+      return sendSuccess(reply, { message: "Order marked as failed" });
+    } catch (err: unknown) {
+      const error = err as Error & { statusCode?: number };
+      return sendError(reply, error.message, error.statusCode ?? 500);
+    }
+  });
+
   fastify.get("/track/lookup", async (request, reply) => {
     const query = request.query as { orderNumber: string; email: string };
     if (!query.orderNumber || !query.email) {

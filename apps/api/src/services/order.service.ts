@@ -436,6 +436,49 @@ export async function failOrder(id: string) {
         note: `Order marked as FAILED due to payment or system failure`,
       },
     });
+
+    // RESTORE CART
+    const whereClause = order.userId ? { userId: order.userId } : { sessionId: order.sessionId! };
+    if (whereClause.userId || whereClause.sessionId) {
+      let activeCart = await tx.cart.findFirst({
+        where: { ...whereClause, status: "ACTIVE" }
+      });
+      if (!activeCart) {
+        activeCart = await tx.cart.create({
+          data: {
+            userId: order.userId,
+            sessionId: order.sessionId,
+            status: "ACTIVE"
+          }
+        });
+      }
+
+      for (const item of order.items) {
+        const variant = await tx.productVariant.findUnique({ where: { id: item.variantId } });
+        if (!variant) continue;
+        
+        const existing = await tx.cartItem.findFirst({
+          where: { cartId: activeCart.id, variantId: item.variantId }
+        });
+        
+        if (existing) {
+          await tx.cartItem.update({
+            where: { id: existing.id },
+            data: { quantity: existing.quantity + item.quantity }
+          });
+        } else {
+          await tx.cartItem.create({
+            data: {
+              cartId: activeCart.id,
+              productId: variant.productId,
+              variantId: item.variantId,
+              quantity: item.quantity,
+              unitPrice: item.price
+            }
+          });
+        }
+      }
+    }
   });
 
   const emailToSend = order.user?.email ?? 

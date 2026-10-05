@@ -17,10 +17,10 @@ const STATUS_COLORS: Record<string, string> = {
 export default function OrdersPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["my-orders"],
-    queryFn: () => api.get<{ orders: any[]; total: number }>("/orders"),
+    queryFn: () => api.get<any[]>("/orders"),
   });
 
-  const orders = (data?.data as any)?.orders ?? [];
+  const orders = Array.isArray(data?.data) ? data.data : [];
 
   if (isLoading) return (
     <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 shimmer rounded-xl" />)}</div>

@@ -59,10 +59,12 @@ export async function listProducts(opts?: {
         store: { select: { id: true, name: true, slug: true } },
         category: { select: { id: true, name: true, slug: true } },
         variants: {
-          where: { isAvailable: true, deletedAt: null }, take: 1, orderBy: { price: "asc" },
-          select: {
-            id: true, price: true, compareAtPrice: true,
-            images: { take: 1, orderBy: { position: "asc" } },
+          where: { deletedAt: null },
+          orderBy: { price: "asc" },
+          include: {
+            attributes: true,
+            images: { orderBy: { position: "asc" } },
+            inventory: true,
           },
         },
         _count: { select: { variants: true } },
@@ -167,14 +169,20 @@ export async function createProduct(
       isActive: data.isActive ?? true,
       isFeatured: data.isFeatured ?? false,
       variants: {
-        create: data.variants.map((v, i) => ({
+        create: data.variants.map((v: any, i) => ({
           sku: v.sku ?? buildSku(store.slug, slug, String(i)),
           price: v.price,
           compareAtPrice: v.compareAtPrice ?? null,
           isAvailable: true,
           attributes: v.attributes
-            ? { create: v.attributes.map((a) => ({ key: a.key, value: a.value })) }
+            ? { create: v.attributes.map((a: any) => ({ key: a.key, value: a.value })) }
             : undefined,
+          inventory: {
+            create: { quantity: v.quantity ?? 0 }
+          },
+          images: v.images && v.images.length > 0
+            ? { create: v.images.map((img: any, idx: number) => ({ url: img.url ?? img, position: idx, altText: data.name })) }
+            : undefined
         })),
       },
     },
@@ -227,6 +235,42 @@ export async function updateProduct(
     },
     include: { variants: { include: { attributes: true } } },
   });
+
+  if (data.variants && data.variants.length > 0) {
+    for (const v of data.variants) {
+      if (v.id) {
+        await prisma.productVariant.update({
+          where: { id: v.id },
+          data: {
+            price: v.price,
+            compareAtPrice: v.compareAtPrice,
+            isAvailable: v.isAvailable ?? true,
+          }
+        });
+        if (v.quantity !== undefined) {
+          const inv = await prisma.inventory.findUnique({ where: { variantId: v.id } });
+          if (inv) {
+            await prisma.inventory.update({ where: { variantId: v.id }, data: { quantity: v.quantity } });
+          } else {
+            await prisma.inventory.create({ data: { variantId: v.id, quantity: v.quantity } });
+          }
+        }
+        if (v.images && Array.isArray(v.images)) {
+          await prisma.productImage.deleteMany({ where: { variantId: v.id } });
+          if (v.images.length > 0) {
+            await prisma.productImage.createMany({
+              data: v.images.map((img: any, idx: number) => ({
+                variantId: v.id,
+                url: img.url ?? img,
+                position: idx,
+                altText: data.name ?? "Product Image"
+              }))
+            });
+          }
+        }
+      }
+    }
+  }
 
   if (adminId) {
     await logAction({

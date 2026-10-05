@@ -25,10 +25,10 @@ export const env = {
   COOKIE_SECURE: process.env.NODE_ENV === "production",
 
   // S3
-  S3_BUCKET: process.env.S3_BUCKET ?? "",
-  S3_REGION: process.env.S3_REGION ?? "ap-south-1",
-  S3_ACCESS_KEY: process.env.S3_ACCESS_KEY ?? "",
-  S3_SECRET_KEY: process.env.S3_SECRET_KEY ?? "",
+  S3_BUCKET: process.env.AWS_S3_BUCKET ?? process.env.S3_BUCKET ?? "",
+  S3_REGION: process.env.AWS_REGION ?? process.env.S3_REGION ?? "ap-south-1",
+  S3_ACCESS_KEY: process.env.AWS_ACCESS_KEY_ID ?? process.env.S3_ACCESS_KEY ?? "",
+  S3_SECRET_KEY: process.env.AWS_SECRET_ACCESS_KEY ?? process.env.S3_SECRET_KEY ?? "",
 
   // Email (SMTP)
   SMTP_HOST: process.env.SMTP_HOST ?? "",

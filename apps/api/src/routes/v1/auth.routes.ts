@@ -32,6 +32,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
           role: user.role,
         },
         accessToken,
+        refreshToken,
       }, 201);
     } catch (err: unknown) {
       const error = err as Error & { statusCode?: number };
@@ -65,6 +66,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
           role: user.role,
         },
         accessToken,
+        refreshToken,
       });
     } catch (err: unknown) {
       const error = err as Error & { statusCode?: number };
@@ -85,7 +87,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
   // ─── POST /refresh ────────────────────────────────────────────
   fastify.post("/refresh", async (request, reply) => {
-    const refreshToken = request.cookies?.refresh_token;
+    const refreshToken = request.cookies?.refresh_token || (request.body as any)?.refreshToken;
     if (!refreshToken) {
       return sendError(reply, "Refresh token required", 401);
     }
@@ -93,7 +95,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const tokens = await authService.refreshAccessToken(refreshToken);
       setAuthCookies(reply, tokens.accessToken, tokens.refreshToken);
-      return sendSuccess(reply, { accessToken: tokens.accessToken });
+      return sendSuccess(reply, { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
     } catch (err: unknown) {
       const error = err as Error & { statusCode?: number };
       clearAuthCookies(reply);

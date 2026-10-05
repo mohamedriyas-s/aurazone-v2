@@ -541,7 +541,17 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
         where, orderBy: { createdAt: "desc" }, skip, take,
         include: {
           user: { select: { id: true, fullName: true, email: true } },
-          items: { select: { quantity: true, subtotal: true } },
+          items: { 
+            include: { 
+              variant: { 
+                include: { 
+                  product: { select: { name: true } },
+                  images: { take: 1, orderBy: { position: 'asc' } }
+                }
+              }
+            } 
+          },
+          orderAddress: true,
           payments: { select: { status: true } },
         },
       }),

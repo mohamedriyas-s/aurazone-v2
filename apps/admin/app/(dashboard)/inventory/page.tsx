@@ -21,12 +21,13 @@ interface InventoryItem {
 export default function InventoryPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editQty, setEditQty] = useState(0);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin", "inventory", search],
-    queryFn: () => api.get<InventoryItem[]>(`/admin/inventory?search=${search}`),
+    queryKey: ["admin", "inventory", search, page],
+    queryFn: () => api.get<InventoryItem[]>(`/admin/inventory?search=${search}&skip=${(page - 1) * 20}&take=20`),
   });
 
   const updateMutation = useMutation({
@@ -82,7 +83,7 @@ export default function InventoryPage() {
 
       <div className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-3 py-2 w-80">
         <Search size={14} className="text-[var(--color-text-tertiary)]" />
-        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+        <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder="Search by SKU or product name..."
           className="flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--color-text-tertiary)]" />
       </div>
@@ -200,6 +201,33 @@ export default function InventoryPage() {
             <p className="text-sm text-[var(--color-text-secondary)]">No inventory data available.</p>
           </div>
         )}
+        
+        {data?.meta && data.meta.totalPages && data.meta.totalPages > 0 ? (
+          <div className="flex items-center justify-between border-t border-[var(--color-border)] px-5 py-3">
+            <span className="text-xs text-[var(--color-text-secondary)]">
+              Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, data.meta.total || 0)} of {data.meta.total} entries
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page === 1}
+                onClick={() => setPage(p => p - 1)}
+                className="rounded-md border border-[var(--color-border)] px-3 py-1 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-muted)] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="text-xs font-medium text-[var(--color-text-primary)]">
+                Page {page} of {data.meta.totalPages}
+              </span>
+              <button
+                disabled={page === data.meta.totalPages}
+                onClick={() => setPage(p => p + 1)}
+                className="rounded-md border border-[var(--color-border)] px-3 py-1 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-muted)] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

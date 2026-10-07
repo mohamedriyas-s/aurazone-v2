@@ -37,6 +37,7 @@ export default function ProductsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [storeFilter, setStoreFilter] = useState("");
+  const [page, setPage] = useState(1);
 
   const { data: storesData } = useQuery({
     queryKey: ["admin", "stores"],
@@ -44,10 +45,10 @@ export default function ProductsPage() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin", "products", search, storeFilter],
+    queryKey: ["admin", "products", search, storeFilter, page],
     queryFn: () =>
       api.get<Product[]>(
-        `/admin/products?search=${search}${storeFilter ? `&storeId=${storeFilter}` : ""}`
+        `/admin/products?search=${search}${storeFilter ? `&storeId=${storeFilter}` : ""}&skip=${(page - 1) * 20}&take=20`
       ),
   });
 
@@ -79,14 +80,14 @@ export default function ProductsPage() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search products..."
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--color-text-tertiary)]"
           />
         </div>
         <select
           value={storeFilter}
-          onChange={(e) => setStoreFilter(e.target.value)}
+          onChange={(e) => { setStoreFilter(e.target.value); setPage(1); }}
           className="form-input w-48 py-2"
         >
           <option value="">All Stores</option>
@@ -225,6 +226,33 @@ export default function ProductsPage() {
             </p>
           </div>
         )}
+        
+        {data?.meta && data.meta.totalPages && data.meta.totalPages > 0 ? (
+          <div className="flex items-center justify-between border-t border-[var(--color-border)] px-5 py-3">
+            <span className="text-xs text-[var(--color-text-secondary)]">
+              Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, data.meta.total || 0)} of {data.meta.total} entries
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page === 1}
+                onClick={() => setPage(p => p - 1)}
+                className="rounded-md border border-[var(--color-border)] px-3 py-1 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-muted)] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="text-xs font-medium text-[var(--color-text-primary)]">
+                Page {page} of {data.meta.totalPages}
+              </span>
+              <button
+                disabled={page === data.meta.totalPages}
+                onClick={() => setPage(p => p + 1)}
+                className="rounded-md border border-[var(--color-border)] px-3 py-1 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-muted)] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -833,10 +833,12 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     const { skip, take } = parsePagination(query.skip, query.take);
     const allowedStoreIds = await getManagerStoreIds(request.user!.userId, request.user!.role);
 
-    const where: any = {};
-    if (allowedStoreIds) {
-      where.variant = { product: { storeId: { in: allowedStoreIds } } };
-    }
+    const where: any = {
+      variant: {
+        deletedAt: null,
+        product: { deletedAt: null, ...(allowedStoreIds && { storeId: { in: allowedStoreIds } }) },
+      },
+    };
     
     if (query.search) {
       where.variant = {
@@ -856,7 +858,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
         where,
         skip,
         take,
-        orderBy: { quantity: "asc" },
+        orderBy: [{ quantity: "asc" }, { updatedAt: "desc" }],
         include: {
           variant: {
             include: {

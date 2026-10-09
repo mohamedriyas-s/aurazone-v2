@@ -384,6 +384,10 @@ export default function ProductForm({
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
+  const errorMsg = (createMutation.error || updateMutation.error)?.message;
+  const isSlugError = errorMsg?.toLowerCase().includes("slug already taken");
+  const isNameError = errorMsg?.toLowerCase().includes("product name already exists");
+
   return (
     <div className="space-y-4 fade-in">
       {/* Header */}
@@ -403,16 +407,26 @@ export default function ProductForm({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="form-label">Product Name</label>
-              <input type="text" className="form-input" required value={form.name}
-                onChange={(e) => setForm(f => ({
-                  ...f, name: e.target.value,
-                  slug: productId ? f.slug : slugify(e.target.value),
-                }))} />
+              <input type="text" className={`form-input ${isNameError ? 'border-[var(--color-danger)] focus:ring-[var(--color-danger)]' : ''}`} required value={form.name}
+                onChange={(e) => {
+                  setForm(f => ({
+                    ...f, name: e.target.value,
+                    slug: productId ? f.slug : slugify(e.target.value),
+                  }));
+                  if (createMutation.error) createMutation.reset();
+                  if (updateMutation.error) updateMutation.reset();
+                }} />
+              {isNameError && <p className="text-[10px] text-[var(--color-danger)] mt-1">A product with this name already exists in this store.</p>}
             </div>
             <div>
               <label className="form-label">Slug</label>
-              <input type="text" className="form-input font-mono text-xs" value={form.slug}
-                onChange={(e) => setForm(f => ({ ...f, slug: e.target.value }))} />
+              <input type="text" className={`form-input font-mono text-xs ${isSlugError ? 'border-[var(--color-danger)] focus:ring-[var(--color-danger)]' : ''}`} value={form.slug}
+                onChange={(e) => {
+                  setForm(f => ({ ...f, slug: e.target.value }));
+                  if (createMutation.error) createMutation.reset();
+                  if (updateMutation.error) updateMutation.reset();
+                }} />
+              {isSlugError && <p className="text-[10px] text-[var(--color-danger)] mt-1">This slug is already taken. Please choose a unique one.</p>}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -661,9 +675,9 @@ export default function ProductForm({
           </button>
         </div>
 
-        {(createMutation.error || updateMutation.error) && (
+        {(createMutation.error || updateMutation.error) && !isSlugError && !isNameError && (
           <p className="text-xs text-[var(--color-danger)] mt-1">
-            {(createMutation.error || updateMutation.error)?.message}
+            {errorMsg}
           </p>
         )}
       </form>

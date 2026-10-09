@@ -155,6 +155,8 @@ export async function createProduct(
     throw Object.assign(new Error("Category does not belong to the selected store"), { statusCode: 400 });
   }
 
+  if (data.name) data.name = data.name.trim();
+
   const existingName = await prisma.product.findFirst({
     where: { storeId: data.storeId, name: { equals: data.name, mode: "insensitive" } },
   });
@@ -230,6 +232,17 @@ export async function updateProduct(
 ): Promise<Product> {
   const product = await prisma.product.findUnique({ where: { id } });
   if (!product) throw Object.assign(new Error("Product not found"), { statusCode: 404 });
+
+  if (data.name && data.name.trim().toLowerCase() !== product.name.toLowerCase()) {
+    const trimmedName = data.name.trim();
+    const existingName = await prisma.product.findFirst({
+      where: { storeId: product.storeId, name: { equals: trimmedName, mode: "insensitive" } },
+    });
+    if (existingName) {
+      throw Object.assign(new Error("Product name already exists in this store"), { statusCode: 409 });
+    }
+    data.name = trimmedName; // Update data.name to be trimmed
+  }
 
   if (data.slug && data.slug !== product.slug) {
     const slugTaken = await prisma.product.findUnique({ where: { slug: data.slug } });

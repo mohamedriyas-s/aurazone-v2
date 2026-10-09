@@ -52,7 +52,7 @@ export default function ProfilePage() {
           <p className="mt-0.5 text-sm text-[var(--color-text-secondary)] truncate">{user?.email}</p>
           <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[var(--color-accent-light)] px-3 py-1 text-xs font-medium text-[var(--color-accent)]">
             <Shield size={11} />
-            {user?.role === "SUPER_ADMIN" ? "Super Admin" : user?.role === "STORE_MANAGER" ? "Manager" : "Customer"}
+            {user?.role === "SUPER_ADMIN" ? "Super Admin" : "Customer"}
           </span>
         </div>
       </div>

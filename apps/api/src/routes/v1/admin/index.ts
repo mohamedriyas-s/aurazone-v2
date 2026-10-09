@@ -14,7 +14,8 @@ import { prisma } from "@aurazone/database";
 const adminRoutes: FastifyPluginAsync = async (fastify) => {
   // All admin routes require authentication + admin role
   fastify.addHook("preHandler", authenticate);
-  fastify.addHook("preHandler", requireRole("SUPER_ADMIN", "STORE_MANAGER"));
+  // fastify.addHook("preHandler", requireRole("SUPER_ADMIN", "STORE_MANAGER"));
+  fastify.addHook("preHandler", requireRole("SUPER_ADMIN"));
 
   // ╔═══════════════════════════════════════════════════════════════╗
   // ║  STORES                                                       ║

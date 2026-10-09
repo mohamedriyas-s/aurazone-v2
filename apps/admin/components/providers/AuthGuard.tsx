@@ -33,7 +33,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  if (user.role !== "SUPER_ADMIN" && user.role !== "STORE_MANAGER") {
+  // if (user.role !== "SUPER_ADMIN" && user.role !== "STORE_MANAGER") {
+  if (user.role !== "SUPER_ADMIN") {
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center bg-[var(--color-bg-base)] p-4 text-center">
         <div className="flex max-w-md flex-col items-center gap-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-8 shadow-xl">
@@ -58,7 +59,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
               403 Forbidden
             </h1>
             <p className="text-sm text-[var(--color-text-secondary)]">
-              Access Denied. You do not have the required permissions (Manager or Admin) to view this control panel.
+              Access Denied. You do not have the required permissions (Admin) to view this control panel.
             </p>
           </div>
 

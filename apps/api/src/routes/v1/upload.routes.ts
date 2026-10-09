@@ -18,7 +18,8 @@ const uploadRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/presigned-url', async (request, reply) => {
     try {
       // Only admins/managers can upload
-      if (!['SUPER_ADMIN', 'STORE_MANAGER'].includes(request.user!.role)) {
+      // if (!['SUPER_ADMIN', 'STORE_MANAGER'].includes(request.user!.role)) {
+      if (!['SUPER_ADMIN'].includes(request.user!.role)) {
         return sendError(reply, 'Forbidden', 403);
       }
 

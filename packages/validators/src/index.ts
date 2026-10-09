@@ -125,7 +125,7 @@ export const productVariantSchema = z.object({
 export const productSchema = z.object({
   storeId: z.string().uuid("Invalid store"),
   categoryId: z.string().uuid("Invalid category"),
-  name: z.string().min(1, "Name is required").max(100, "Name cannot exceed 100 characters"),
+  name: z.string().trim().min(1, "Name is required").max(100, "Name cannot exceed 100 characters").regex(/^[a-zA-Z0-9\s\-&.,]+$/, "Only English letters, numbers, and basic punctuation are allowed"),
   brand: z.string().max(255, "Brand cannot exceed 255 characters").optional(),
   modelNumber: z.string().max(255, "Model number cannot exceed 255 characters").optional(),
   gender: z.enum(["MEN", "WOMEN", "UNISEX", "KIDS"]).optional().nullable(),
